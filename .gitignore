@@ -1,0 +1,24 @@
+# Local build state and generated artifacts
+.gradle/
+.kotlin/
+**/build/
+*.apk
+*.aab
+*.apks
+.cxx/
+.externalNativeBuild/
+
+# Machine-specific settings, credentials, and signing keys
+local.properties
+*.jks
+*.keystore
+keystore.properties
+.env
+.env.*
+
+# IDE and session-local files
+.idea/
+*.iml
+.DS_Store
+.meta-app/
+uploads/

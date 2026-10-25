@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">TextEditor</string>
+    <string name="help_title">ヘルプ</string>
+    <string name="help_back">編集画面に戻る</string>
+    <string name="help_overview">アプリの概要</string>
+    <string name="help_usage">アプリの使い方</string>
+    <string name="help_version">バージョン情報</string>
+    <string name="help_overview_body">TextEditorは、Android向けのテキストエディターです。端末内のテキストファイルの編集・検索・置換・保存に対応しています。\n\n起動時には前回開いたファイルを自動で開きます。保存済みの内容を読み込むため、未保存の編集内容をバックアップする機能ではありません。他のアプリからファイルを指定して開いた場合は、指定されたファイルを優先します。\n\nUTF-8形式で読み書きし、改行コードはLF・CRLF・CRを扱います。最近使用したファイルの履歴、ライト／ダークモード、自動保存も利用できます。</string>
+    <string name="help_files_heading">1. ファイルを開く・保存する</string>
+    <string name="help_files_body">上部のファイルアイコンから「新規作成」または「開く」を選択します。本文を編集したら「保存」を選択してください。新規ファイルでは保存先を指定します。\n\n別のファイルとして保存するには「名前を付けて保存」を選択します。「再読み込み」は保存済みの内容を読み直します。未保存の変更を破棄する操作では確認が表示されます。</string>
+    <string name="help_toolbar_heading">2. 下部ツールバーを使う</string>
+    <string name="help_toolbar_body">左から順に、開く／新規作成／元に戻す／やり直す／検索と置換／前の検索結果／次の検索結果／保存／テキストをクリアです。\n\n右端の×は、確認後に編集中の本文をすべて消去します。ファイル名と保存先は維持され、「元に戻す」で復元できます。自動保存が有効な場合は、クリアした内容も自動保存の対象です。\n\n上部の鉛筆アイコンを押すと本文へフォーカスし、キーボードを表示します。右上メニューから行番号への移動、統計、共有、読み取り専用への切り替えも利用できます。</string>
+    <string name="help_search_heading">3. 検索・置換する</string>
+    <string name="help_search_body">虫眼鏡または右上メニューの「検索と置換」を開き、検索テキストを入力します。大文字・小文字の区別、正規表現、末尾から先頭へ一周する検索を切り替えられます。\n\n正規表現では、検索に (\\d+)、置換に [$1] を指定すると数字を角括弧で囲めます。先頭が * の式はワイルドカードとして扱い、*.txt でファイル名を検索できます。\n\n一致した位置やエラーは画面内のカードに表示します。結果カードの×で非表示にできます。</string>
+    <string name="help_recent_heading">4. 履歴・ファイル権限を使う</string>
+    <string name="help_recent_body">ハンバーガーメニューの「最近使用したファイル」で、名前・パスまたはリンク・最終使用日時を確認できます。項目を選ぶとファイルを開き直します。\n\n端末内のファイルへのアクセスを許可するには、履歴ページまたは設定の「ファイルアクセス」からAndroidの権限画面を開きます。クラウド上のファイルはファイルごとのアクセス権が必要です。\n\nファイルが移動・削除された場合や権限が失効した場合は、アクセスを許可するかファイルを再選択してください。履歴には本文のバックアップは保存していません。</string>
+    <string name="help_display_heading">5. 表示・拡大率を変更する</string>
+    <string name="help_display_body">ハンバーガーメニューの「設定」で、ライト／ダーク、行番号、ワードラップ、フォントサイズ、行間を変更できます。\n\n本文の改行・タブ・空白の表示も切り替えられます。改行記号はLFが ←、CRLFが ↵ です。表示用の記号は保存する本文には追加しません。\n\n右上メニューの「拡大率」から25〜400％に調整できます。ピンチ操作は設定で有効にした場合のみ利用できます。初期状態では無効です。</string>
+    <string name="help_autosave_heading">6. 自動保存を使う</string>
+    <string name="help_autosave_body">設定の「自動保存」を有効にすると、最後の編集から設定した時間が経過したときに保存します。待ち時間は1〜10分で指定できます。新規ファイルは、最初に手動で保存先を指定してください。</string>
+    <string name="help_version_body">アプリ名：%1$s\nバージョン：%2$s\nビルド番号：%3$s</string>
+    <string name="help_version_unknown">取得できませんでした</string>
+    <string name="clear_text_title">テキストをクリア</string>
+    <string name="clear_text_confirm">編集中のテキストをすべて消去しますか？</string>
+    <string name="clear_text_action">クリア</string>
+    <string name="clear_text_cancel">キャンセル</string>
+    <string name="clear_text_read_only">読み取り専用のため、テキストをクリアできません。</string>
+</resources>

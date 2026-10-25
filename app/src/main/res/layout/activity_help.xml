@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/helpRoot" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+    <LinearLayout android:id="@+id/helpHeader" android:layout_width="match_parent" android:layout_height="56dp" android:orientation="horizontal" android:gravity="center_vertical">
+        <ImageView android:id="@+id/helpBack" android:layout_width="56dp" android:layout_height="match_parent" android:src="@drawable/ic_arrow_back" android:scaleType="center" android:contentDescription="@string/help_back" android:focusable="true" android:background="?android:attr/selectableItemBackgroundBorderless" />
+        <TextView android:id="@+id/helpTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/help_title" android:textSize="20sp" />
+    </LinearLayout>
+    <HorizontalScrollView android:layout_width="match_parent" android:layout_height="48dp" android:scrollbars="none" android:fillViewport="true">
+        <LinearLayout android:id="@+id/helpIndex" android:layout_width="wrap_content" android:layout_height="match_parent" android:orientation="horizontal">
+            <TextView android:id="@+id/helpOverviewLink" android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center" android:paddingStart="20dp" android:paddingEnd="20dp" android:text="@string/help_overview" android:textSize="14sp" android:focusable="true" android:background="?android:attr/selectableItemBackground" />
+            <TextView android:id="@+id/helpUsageLink" android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center" android:paddingStart="20dp" android:paddingEnd="20dp" android:text="@string/help_usage" android:textSize="14sp" android:focusable="true" android:background="?android:attr/selectableItemBackground" />
+            <TextView android:id="@+id/helpVersionLink" android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center" android:paddingStart="20dp" android:paddingEnd="20dp" android:text="@string/help_version" android:textSize="14sp" android:focusable="true" android:background="?android:attr/selectableItemBackground" />
+        </LinearLayout>
+    </HorizontalScrollView>
+    <ScrollView android:id="@+id/helpScroll" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:fillViewport="true">
+        <LinearLayout android:id="@+id/helpSections" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp" android:orientation="vertical" />
+    </ScrollView>
+</LinearLayout>

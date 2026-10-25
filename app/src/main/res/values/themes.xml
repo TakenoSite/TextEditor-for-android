@@ -1,0 +1,25 @@
+<resources>
+    <style name="Theme.HelloWorld" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorAccent">#43A047</item>
+        <item name="android:statusBarColor">#909090</item>
+        <item name="android:navigationBarColor">#EDEDED</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+    <style name="Theme.Editor.Dark" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorAccent">#81C784</item>
+        <item name="android:statusBarColor">#292B2F</item>
+        <item name="android:navigationBarColor">#202124</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+    <style name="ToolItem">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:drawableTint">#888888</item>
+        <item name="android:textColor">#888888</item>
+        <item name="android:textSize">26sp</item>
+    </style>
+</resources>
