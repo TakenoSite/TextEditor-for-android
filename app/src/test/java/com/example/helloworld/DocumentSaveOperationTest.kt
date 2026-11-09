@@ -6,7 +6,9 @@ import java.io.IOException
 
 class DocumentSaveOperationTest {
     @Test fun doesNotRequestForcedTxtExtension() {
-        assertEquals("*/*", DocumentSaveOperation.CREATE_MIME_TYPE)
+        assertEquals(DocumentFilePolicy.GENERIC_MIME, DocumentSaveOperation.CREATE_MIME_TYPE)
+        assertFalse(DocumentSaveOperation.CREATE_MIME_TYPE.contains('*'))
+        assertNotEquals("text/plain", DocumentSaveOperation.CREATE_MIME_TYPE)
     }
 
     @Test fun preservesNamesAndSourceForCommonExtensions() {

@@ -1,4 +1,12 @@
 <resources>
+    <string name="save_filename">ファイル名（拡張子を含む）</string>
+    <string name="save_filename_invalid">有効なファイル名を入力してください。/、\\、制御文字は使用できません。</string>
+    <string name="save_choose_location">保存場所を選ぶ</string>
+    <string name="save_name_confirm">保存名を確認</string>
+    <string name="save_name_changed">保存先から返された名前：%1$s\n保存する名前を確認してください。</string>
+    <string name="save_rename_failed">この保存先ではファイル名を変更できません。</string>
+    <string name="save_rename_mismatch">保存先が別の名前を返しました：%1$s</string>
+    <string name="save_rename_error">指定名を確認できなかったため、本文は書き込んでいません。編集内容は保持しています。別の保存先で再試行してください。作成済みの空ファイルが残る場合があります。\n%1$s</string>
     <string name="choice_collapsed">閉じています。押して選択</string>
     <string name="choice_expanded">選択肢を表示中</string>
     <string name="language_welcome">ようこそ / Welcome</string>

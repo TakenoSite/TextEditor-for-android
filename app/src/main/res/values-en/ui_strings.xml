@@ -1,4 +1,12 @@
 <resources>
+    <string name="save_filename">File name (including extension)</string>
+    <string name="save_filename_invalid">Enter a valid file name without /, \\, or control characters.</string>
+    <string name="save_choose_location">Choose save location</string>
+    <string name="save_name_confirm">Confirm file name</string>
+    <string name="save_name_changed">Name returned by the provider: %1$s\nConfirm the name to save.</string>
+    <string name="save_rename_failed">This provider cannot rename the file.</string>
+    <string name="save_rename_mismatch">The provider returned a different name: %1$s</string>
+    <string name="save_rename_error">The requested name could not be confirmed, so no text was written. Your edits are retained. Try another location. An empty created file may remain.\n%1$s</string>
     <string name="choice_collapsed">Collapsed. Activate to select</string>
     <string name="choice_expanded">Options expanded</string>
     <string name="language_welcome">ようこそ / Welcome</string>

@@ -62,6 +62,7 @@ class MainActivity : LocalizedActivity() {
     private var reconnectSourceUri: Uri? = null
     private var preview: MarkdownPreview? = null
     private var syntax: SyntaxHighlighter? = null
+    private var requestedSaveName: String? = null
     private val previewLifecycle = PreviewLifecycle()
     private val previewVisible get() = previewLifecycle.visible
     private var stateToken = java.util.UUID.randomUUID().toString()
@@ -97,9 +98,18 @@ class MainActivity : LocalizedActivity() {
             }
         }
     }
-    private val saveLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument(DocumentSaveOperation.CREATE_MIME_TYPE)) { uri ->
-        // Do not reuse the original file's cached path for a newly selected target.
-        if (uri != null) saveTo(uri, null)
+    private val saveLauncher = registerForActivityResult(CreateEditorDocument()) { uri ->
+        val requested = requestedSaveName
+        requestedSaveName = null
+        if (uri != null) {
+            val actual = displayName(uri)
+            val corrected = requested?.let { DocumentFilePolicy.extraTxtSuggestion(it, actual) }
+            if (corrected != null) {
+                // Only suspicious .txt additions need a second step, not normal picker edits.
+                SaveNameDialog.create(corrected, uri.toString(), actual)
+                    .show(supportFragmentManager, "save_created_name")
+            } else saveTo(uri, null)
+        }
     }
     private val reconnectLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val old = reconnectSourceUri
@@ -117,6 +127,17 @@ class MainActivity : LocalizedActivity() {
         appearanceDark = EditorAppearance.isDark(this)
         setTheme(EditorAppearance.theme(this))
         super.onCreate(savedInstanceState)
+        requestedSaveName = savedInstanceState?.getString("requested_save_name")
+        supportFragmentManager.setFragmentResultListener(SaveNameDialog.RESULT, this) { _, result ->
+            val filename = result.getString("name") ?: return@setFragmentResultListener
+            val createdUri = result.getString("uri")
+            if (createdUri == null) {
+                requestedSaveName = filename
+                saveLauncher.launch(filename)
+            } else {
+                saveCreatedDocument(Uri.parse(createdUri), filename)
+            }
+        }
         name = getString(R.string.untitled_file)
         // Restore the editor payload from app-private storage, not a large Android Bundle.
         val editorState = savedInstanceState?.let { saved ->
@@ -250,6 +271,7 @@ class MainActivity : LocalizedActivity() {
     }
 
     override fun onSaveInstanceState(androidState: Bundle) {
+        androidState.putString("requested_save_name", requestedSaveName)
         val outState = Bundle()
         outState.putBoolean("markdown_preview", previewVisible)
         outState.putString("local_path", localDocumentPath)
@@ -433,7 +455,7 @@ class MainActivity : LocalizedActivity() {
     }
 
     private fun open() = confirmDiscard {
-        openLauncher.launch(arrayOf("text/*", "application/json", "application/xml", "application/octet-stream"))
+        openLauncher.launch(DocumentFilePolicy.openMimeTypes)
     }
 
     private fun showFileMenu() {
@@ -550,8 +572,28 @@ class MainActivity : LocalizedActivity() {
     }
 
     private fun save(asNew: Boolean) {
-        if (asNew || document == null) { saveLauncher.launch(name); return }
+        if (asNew || document == null) {
+            requestedSaveName = name
+            saveLauncher.launch(name)
+            return
+        }
         saveTo(document ?: return, localDocumentPath)
+    }
+
+    private fun saveCreatedDocument(createdUri: Uri, filename: String) {
+        try {
+            val target = if (displayName(createdUri) == filename) createdUri else
+                DocumentsContract.renameDocument(contentResolver, createdUri, filename)
+                    ?: error(getString(R.string.save_rename_failed))
+            val actual = displayName(target)
+            if (actual != filename) error(getString(R.string.save_rename_mismatch, actual))
+            saveTo(target, null)
+        } catch (e: Exception) {
+            android.util.Log.w("DocumentSave", "Unable to confirm created document name", e)
+            AlertDialog.Builder(this).setTitle(R.string.save_name_confirm)
+                .setMessage(getString(R.string.save_rename_error, e.localizedMessage ?: ""))
+                .setPositiveButton(R.string.action_close, null).show()
+        }
     }
 
     private fun saveTo(uri: Uri, cachedPath: String?) {

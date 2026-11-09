@@ -34,6 +34,10 @@
                 <data android:mimeType="application/json" />
                 <data android:mimeType="application/xml" />
                 <data android:mimeType="application/javascript" />
+                <data android:mimeType="application/x-javascript" />
+                <data android:mimeType="application/ecmascript" />
+                <data android:mimeType="application/typescript" />
+                <data android:mimeType="application/vnd.texteditor.document" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
