@@ -36,6 +36,9 @@ android {
 }
 
 dependencies {
+    implementation("org.commonmark:commonmark:0.22.0")
+    implementation("org.commonmark:commonmark-ext-gfm-tables:0.22.0")
+    implementation("org.commonmark:commonmark-ext-gfm-strikethrough:0.22.0")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")

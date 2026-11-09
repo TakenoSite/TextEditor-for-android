@@ -60,6 +60,17 @@ class MainActivity : AppCompatActivity() {
     private var searchCardStatus: TextView? = null
     private var historyRetryUri: Uri? = null
     private var reconnectSourceUri: Uri? = null
+    private var preview: MarkdownPreview? = null
+    private val previewLifecycle = PreviewLifecycle()
+    private val previewVisible get() = previewLifecycle.visible
+    private var stateToken = java.util.UUID.randomUUID().toString()
+    private val renderPreview = Runnable {
+        if (!isFinishing && !isDestroyed && findViewById<View>(R.id.markdownHost).isAttachedToWindow &&
+            previewLifecycle.takeRenderRequest()) {
+            if (preview == null) preview = MarkdownPreview(findViewById(R.id.markdownHost), appearanceDark)
+            preview?.render(editor.text.toString())
+        }
+    }
 
     private fun searchMessage(text: String) {
         historyRetryUri = null
@@ -109,16 +120,28 @@ class MainActivity : AppCompatActivity() {
         appearanceDark = EditorAppearance.isDark(this)
         setTheme(EditorAppearance.theme(this))
         super.onCreate(savedInstanceState)
+        // Restore the editor payload from app-private storage, not a large Android Bundle.
+        val editorState = savedInstanceState?.let { saved ->
+            val token = saved.getString("editor_state_token")
+            if (token == null) saved else try {
+                EditorStateStore(this).load(token).also { stateToken = token }
+            } catch (e: Exception) {
+                android.util.Log.e("EditorState", "Unable to restore editor snapshot", e)
+                message("編集状態を復元できませんでした。保存済みファイルを開き直します。")
+                null
+            }
+        }
         onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (navigationOverlay != null) closeNavigation()
+                else if (previewVisible) setPreview(false)
                 else confirmDiscard { finish() }
             }
         })
         setContentView(R.layout.activity_main)
         editor = findViewById(R.id.editor)
         lines = findViewById(R.id.lineNumbers)
-        zoomPercent = EditorZoom.clamp(savedInstanceState?.getFloat("zoom_percent", prefs.getFloat("zoom_percent", 100f)) ?: prefs.getFloat("zoom_percent", 100f))
+        zoomPercent = EditorZoom.clamp(editorState?.getFloat("zoom_percent", prefs.getFloat("zoom_percent", 100f)) ?: prefs.getFloat("zoom_percent", 100f))
         editor.onZoomRequested = { factor, x, y -> applyZoom(zoomPercent * factor, x, y) }
         editor.onZoomFinished = { saveZoom() }
         title = findViewById(R.id.fileTitle)
@@ -172,7 +195,9 @@ class MainActivity : AppCompatActivity() {
         })
         findViewById<View>(R.id.menuButton).setOnClickListener { showNavigation() }
         findViewById<View>(R.id.openTop).setOnClickListener { showFileMenu() }
-        findViewById<View>(R.id.editTop).setOnClickListener { editor.requestFocus(); keyboard() }
+        findViewById<View>(R.id.editTop).setOnClickListener { setPreview(false); editor.requestFocus(); keyboard() }
+        findViewById<View>(R.id.markdownEdit).setOnClickListener { setPreview(false) }
+        findViewById<View>(R.id.markdownPreview).setOnClickListener { setPreview(true) }
         findViewById<View>(R.id.moreTop).setOnClickListener { showMore(it) }
         findViewById<View>(R.id.toolOpen).setOnClickListener { open() }
         findViewById<View>(R.id.toolNew).setOnClickListener { confirmDiscard { newDocument() } }
@@ -183,27 +208,27 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.toolNext).setOnClickListener { findMatch(true) }
         findViewById<View>(R.id.toolSave).setOnClickListener { save(false) }
         findViewById<View>(R.id.toolClose).setOnClickListener { clearEditorText() }
-        if (savedInstanceState != null) {
-            reconnectSourceUri = savedInstanceState.getString("reconnect_source")?.let(Uri::parse)
-            historyRetryUri = savedInstanceState.getString("history_retry")?.let(Uri::parse)
-            document = savedInstanceState.getString("uri")?.let(Uri::parse)
-            localDocumentPath = savedInstanceState.getString("local_path")
-            name = savedInstanceState.getString("name") ?: name
-            dirty = savedInstanceState.getBoolean("dirty")
-            replaceText(savedInstanceState.getString("text") ?: "")
-            readOnly = savedInstanceState.getBoolean("readonly")
-            originalSource = savedInstanceState.getString("original") ?: ""
-            savedInstanceState.getStringArrayList("undo")?.forEach { undo.addLast(it) }
-            savedInstanceState.getStringArrayList("redo")?.forEach { redo.addLast(it) }
-            query = savedInstanceState.getString("query") ?: ""
-            matchCase = savedInstanceState.getBoolean("matchCase")
-            useRegex = savedInstanceState.getBoolean("regex")
-            wrapSearch = savedInstanceState.getBoolean("wrapSearch", true)
-            editor.setSelection(savedInstanceState.getInt("selectionStart").coerceIn(0, editor.length()), savedInstanceState.getInt("selectionEnd").coerceIn(0, editor.length()))
-            editor.post { editor.scrollTo(savedInstanceState.getInt("scrollX"), savedInstanceState.getInt("scrollY")) }
+        if (editorState != null) {
+            reconnectSourceUri = editorState.getString("reconnect_source")?.let(Uri::parse)
+            historyRetryUri = editorState.getString("history_retry")?.let(Uri::parse)
+            document = editorState.getString("uri")?.let(Uri::parse)
+            localDocumentPath = editorState.getString("local_path")
+            name = editorState.getString("name") ?: name
+            dirty = editorState.getBoolean("dirty")
+            replaceText(editorState.getString("text") ?: "")
+            readOnly = editorState.getBoolean("readonly")
+            originalSource = editorState.getString("original") ?: ""
+            editorState.getStringArrayList("undo")?.forEach { undo.addLast(it) }
+            editorState.getStringArrayList("redo")?.forEach { redo.addLast(it) }
+            query = editorState.getString("query") ?: ""
+            matchCase = editorState.getBoolean("matchCase")
+            useRegex = editorState.getBoolean("regex")
+            wrapSearch = editorState.getBoolean("wrapSearch", true)
+            editor.setSelection(editorState.getInt("selectionStart").coerceIn(0, editor.length()), editorState.getInt("selectionEnd").coerceIn(0, editor.length()))
+            editor.post { editor.scrollTo(editorState.getInt("scrollX"), editorState.getInt("scrollY")) }
             editor.isFocusableInTouchMode = !readOnly
             refresh()
-            historyRetryUri?.let { showFileAccessIssue(it, savedInstanceState.getString("history_issue") ?: "ファイルを再選択してアクセス権を更新してください。") }
+            historyRetryUri?.let { showFileAccessIssue(it, editorState.getString("history_issue") ?: "ファイルを再選択してアクセス権を更新してください。") }
         } else if (intent?.action == Intent.ACTION_VIEW || intent?.action == Intent.ACTION_EDIT) {
             intent.data?.let { load(it, false) }
         } else {
@@ -212,6 +237,8 @@ class MainActivity : AppCompatActivity() {
                 ?: RecentFilesStore(this).all().firstOrNull()?.uri
             previous?.let { load(Uri.parse(it), false, fromHistory = true) }
         }
+        if (editorState != null) setPreview(editorState.getBoolean("markdown_preview", false))
+        else updatePreviewTabs() // load() already selected and rendered the initial document.
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -222,7 +249,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
+    override fun onSaveInstanceState(androidState: Bundle) {
+        val outState = Bundle()
+        outState.putBoolean("markdown_preview", previewVisible)
         outState.putString("local_path", localDocumentPath)
         outState.putString("reconnect_source", reconnectSourceUri?.toString())
         outState.putString("history_retry", historyRetryUri?.toString())
@@ -244,7 +273,14 @@ class MainActivity : AppCompatActivity() {
         outState.putInt("selectionEnd", editor.selectionEnd)
         outState.putInt("scrollX", editor.scrollX)
         outState.putInt("scrollY", editor.scrollY)
-        super.onSaveInstanceState(outState)
+        try {
+            EditorStateStore(this).save(stateToken, outState)
+            androidState.putString("editor_state_token", stateToken)
+        } catch (e: Exception) {
+            android.util.Log.e("EditorState", "Unable to save editor snapshot", e)
+            message("編集状態を退避できませんでした。未保存の変更を手動で保存してください。")
+        }
+        super.onSaveInstanceState(androidState)
     }
 
     override fun onResume() {
@@ -254,8 +290,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onPause() {
+        previewLifecycle.pause()
+        stopPreview()
         saveZoom()
         super.onPause()
+    }
+
+    override fun onPostResume() {
+        super.onPostResume()
+        previewLifecycle.resume()
+        handler.removeCallbacks(renderPreview)
+        handler.post(renderPreview)
+    }
+
+    private fun stopPreview() {
+        handler.removeCallbacks(renderPreview)
+        preview?.close()
+        preview = null
     }
 
     private fun scheduleAutosave() {
@@ -265,9 +316,36 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setPreview(visible: Boolean) {
+        previewLifecycle.select(visible)
+        stopPreview()
+        if (visible) {
+            (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager)
+                .hideSoftInputFromWindow(editor.windowToken, 0)
+            editor.clearFocus()
+            handler.post(renderPreview)
+        }
+        findViewById<View>(R.id.editorPane).visibility = if (visible) View.GONE else View.VISIBLE
+        findViewById<View>(R.id.markdownHost).visibility = if (visible) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.toolBar).visibility = if (visible) View.GONE else View.VISIBLE
+        updatePreviewTabs()
+    }
+
+    private fun updatePreviewTabs() {
+        listOf(R.id.markdownEdit to !previewVisible, R.id.markdownPreview to previewVisible).forEach { (id, selected) ->
+            findViewById<TextView>(id).apply {
+                isSelected = selected
+                setTextColor(if (selected) colors.accent else colors.text)
+                setTypeface(null, if (selected) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
+            }
+        }
+    }
+
     private fun applyEditorSettings() {
         val c = colors
         fun paint(view: View) {
+            // The preview owns its colors; do not traverse WebView implementation children.
+            if (view.id == R.id.markdownHost) return
             when (view) {
                 is TextView -> { view.setTextColor(c.text); view.compoundDrawableTintList = c.tint }
                 is ImageView -> {
@@ -299,6 +377,7 @@ class MainActivity : AppCompatActivity() {
         editor.updateMarkerPadding()
         editor.invalidate()
         refresh()
+        updatePreviewTabs()
         scheduleAutosave()
     }
 
@@ -328,6 +407,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun newDocument() {
+        setPreview(false)
         document = null
         localDocumentPath = null
         name = "無題.txt"
@@ -398,6 +478,7 @@ class MainActivity : AppCompatActivity() {
                 ?: prefs.getString("last_document_path", null).takeIf { prefs.getString("last_document_uri", null) == uri.toString() }
             val opened = LocalDocumentAccess.read(this, uri, cached)
             val text = opened.text
+            setPreview(false)
             document = uri
             localDocumentPath = opened.path
             name = opened.path?.let { File(it).name } ?: displayName(uri)
@@ -413,6 +494,7 @@ class MainActivity : AppCompatActivity() {
             }
             editor.alpha = .78f
             editor.animate().alpha(1f).setDuration(140).start()
+            setPreview(MarkdownRenderer.previewOnOpen(name))
             true
         } catch (e: Exception) {
             if (fromHistory) showFileAccessIssue(uri, if (!StorageAccess.granted(this)) "すべてのファイルへのアクセスを許可してください。" else "ファイルを開けませんでした。移動・削除、またはファイルの提供元を確認してください。")
@@ -499,6 +581,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun searchDialog() {
+        setPreview(false)
         val panel = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(22), dp(8), dp(22), 0) }
         val search = EditText(this).apply { hint = "検索テキスト"; setSingleLine(true); setText(query) }
         val replacement = EditText(this).apply { hint = "以下に置き換え"; setSingleLine(true) }
@@ -808,6 +891,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun goToLine() {
+        setPreview(false)
         val input = EditText(this).apply { inputType = android.text.InputType.TYPE_CLASS_NUMBER; hint = "行番号" }
         AlertDialog.Builder(this).setTitle("行番号へ行く").setView(input).setPositiveButton("移動") { _, _ ->
             val n = (input.text.toString().toIntOrNull() ?: 1).coerceAtLeast(1)
@@ -831,5 +915,10 @@ class MainActivity : AppCompatActivity() {
     private fun keyboard() { (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(editor, InputMethodManager.SHOW_IMPLICIT) }
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
     private fun message(text: String) = Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
-    override fun onDestroy() { handler.removeCallbacks(autosave); super.onDestroy() }
+    override fun onDestroy() {
+        stopPreview()
+        handler.removeCallbacks(autosave)
+        if (isFinishing) EditorStateStore(this).delete(stateToken)
+        super.onDestroy()
+    }
 }

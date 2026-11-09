@@ -1,4 +1,14 @@
 <resources>
+    <string name="markdown_edit">編集</string>
+    <string name="markdown_preview">Markdownプレビュー</string>
+    <string name="markdown_loading">プレビューを作成中…</string>
+    <string name="markdown_error">プレビューを表示できませんでした。本文は保持されています。「編集」で本文に戻るか、「Markdownプレビュー」で再試行してください。</string>
+    <string name="markdown_external">外部ブラウザーで開きますか？</string>
+    <string name="markdown_open">開く</string>
+    <string name="markdown_cancel">キャンセル</string>
+    <string name="markdown_link_error">このリンクは開けません。</string>
+    <string name="help_markdown_heading">7. Markdownをプレビューする</string>
+    <string name="help_markdown_body">拡張子が.mdのファイルは開くと自動で整形表示します（.MDなど大文字も対応）。「編集」または戻る操作で編集画面に戻ります。上部の「Markdownプレビュー」を押すと未保存の本文も再表示できます。切り替えで本文・カーソル位置・未保存状態は変更しません。\n\n見出し、箇条書き、引用、コード、表、取り消し線、リンクに対応します。HTMLは文字として表示し、画像の読み込み、スクリプト実行は行いません。HTTP／HTTPSのリンクは確認後、外部ブラウザーで開きます。相対リンクや相対画像、タスクリスト、数式には対応していません。</string>
     <string name="app_name">TextEditor</string>
     <string name="help_title">ヘルプ</string>
     <string name="help_back">編集画面に戻る</string>
