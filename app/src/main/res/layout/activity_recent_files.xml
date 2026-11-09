@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/recentRoot" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
     <LinearLayout android:id="@+id/recentHeader" android:layout_width="match_parent" android:layout_height="56dp" android:orientation="horizontal" android:gravity="center_vertical">
-        <ImageView android:id="@+id/recentBack" android:layout_width="56dp" android:layout_height="match_parent" android:src="@drawable/ic_arrow_back" android:scaleType="center" android:contentDescription="編集画面に戻る" android:focusable="true" android:background="?android:attr/selectableItemBackgroundBorderless" />
-        <TextView android:id="@+id/recentTitle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="最近使用したファイル" android:textSize="20sp" />
+        <ImageView android:id="@+id/recentBack" android:layout_width="56dp" android:layout_height="match_parent" android:src="@drawable/ic_arrow_back" android:scaleType="center" android:contentDescription="@string/help_back" android:focusable="true" android:background="?android:attr/selectableItemBackgroundBorderless" />
+        <TextView android:id="@+id/recentTitle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/recent_title" android:textSize="20sp" />
     </LinearLayout>
-    <TextView android:id="@+id/recentStorageAccess" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="56dp" android:padding="16dp" android:gravity="center_vertical" android:text="すべてのファイルへのアクセスを許可" android:textSize="16sp" android:focusable="true" android:background="?android:attr/selectableItemBackground" />
+    <TextView android:id="@+id/recentStorageAccess" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="56dp" android:padding="16dp" android:gravity="center_vertical" android:text="@string/access_allow" android:textSize="16sp" android:focusable="true" android:background="?android:attr/selectableItemBackground" />
     <ScrollView android:id="@+id/recentScroll" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:fillViewport="true">
         <LinearLayout android:id="@+id/recentList" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp" />
     </ScrollView>

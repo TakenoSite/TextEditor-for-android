@@ -52,8 +52,8 @@ internal object LocalDocumentAccess {
             try { return Opened(File(local).readText(Charsets.UTF_8), local) } catch (_: java.io.IOException) { /* Try provider. */ }
             catch (_: SecurityException) { /* A protected path still needs SAF or may be inaccessible. */ }
         }
-        val text = if (uri.scheme == "file") File(uri.path ?: error("パスがありません")).readText(Charsets.UTF_8) else
-            context.contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: error("読み込みできません")
+        val text = if (uri.scheme == "file") File(uri.path ?: error(context.getString(R.string.path_missing))).readText(Charsets.UTF_8) else
+            context.contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: error(context.getString(R.string.read_failed))
         return Opened(text, local)
     }
 
@@ -63,7 +63,7 @@ internal object LocalDocumentAccess {
             val file = File(local)
             if (file.isFile && file.canWrite()) { file.writeText(text, Charsets.UTF_8); return }
         }
-        if (uri.scheme == "file") File(uri.path ?: error("パスがありません")).writeText(text, Charsets.UTF_8) else
-            (context.contentResolver.openOutputStream(uri, "wt") ?: error("書き込みできません")).bufferedWriter(Charsets.UTF_8).use { it.write(text) }
+        if (uri.scheme == "file") File(uri.path ?: error(context.getString(R.string.path_missing))).writeText(text, Charsets.UTF_8) else
+            (context.contentResolver.openOutputStream(uri, "wt") ?: error(context.getString(R.string.write_failed))).bufferedWriter(Charsets.UTF_8).use { it.write(text) }
     }
 }

@@ -11,7 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import java.text.DateFormat
 import java.util.Date
 
-class RecentFilesActivity : AppCompatActivity() {
+class RecentFilesActivity : LocalizedActivity() {
     private val storagePermission = StoragePermissionController(this) { updateStorageAccess() }
 
     override fun onResume() {
@@ -23,10 +23,10 @@ class RecentFilesActivity : AppCompatActivity() {
         val colors = EditorAppearance(EditorAppearance.isDark(this))
         findViewById<TextView>(R.id.recentStorageAccess).apply {
             visibility = if (StorageAccess.granted(this@RecentFilesActivity)) android.view.View.GONE else android.view.View.VISIBLE
-            text = "すべてのファイルへのアクセスを許可"
+            setText(R.string.access_allow)
             setTextColor(colors.accent)
             setBackgroundColor(colors.notice)
-            setOnClickListener { if (!storagePermission.request()) text = "権限設定を開けませんでした" }
+            setOnClickListener { if (!storagePermission.request()) setText(R.string.access_settings_error) }
         }
     }
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,11 +43,11 @@ class RecentFilesActivity : AppCompatActivity() {
         val files = RecentFilesStore(this).all()
         if (files.isEmpty()) {
             list.addView(TextView(this).apply {
-                text = "履歴はありません"; textSize = 16f; setTextColor(colors.secondary)
+                setText(R.string.recent_empty); textSize = 16f; setTextColor(colors.secondary)
                 gravity = Gravity.CENTER; setPadding(dp(16), dp(48), dp(16), dp(48))
             })
         }
-        val dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+        val dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, resources.configuration.locales[0])
         for (file in files) {
             val row = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL

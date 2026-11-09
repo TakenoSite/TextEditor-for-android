@@ -12,7 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.core.view.ViewCompat
 
-class HelpActivity : AppCompatActivity() {
+class HelpActivity : LocalizedActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(EditorAppearance.theme(this))
         super.onCreate(savedInstanceState)
@@ -60,7 +60,8 @@ class HelpActivity : AppCompatActivity() {
             R.string.help_recent_heading to R.string.help_recent_body,
             R.string.help_display_heading to R.string.help_display_body,
             R.string.help_autosave_heading to R.string.help_autosave_body,
-            R.string.help_markdown_heading to R.string.help_markdown_body
+            R.string.help_markdown_heading to R.string.help_markdown_body,
+            R.string.help_language_heading to R.string.help_language_body
         )
         steps.forEachIndexed { index, (heading, content) ->
             usage.addView(TextView(this).apply {

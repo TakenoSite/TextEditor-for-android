@@ -4,7 +4,7 @@ import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
 
-internal class RecentFilesStore(context: Context) {
+internal class RecentFilesStore(private val context: Context) {
     private val prefs = context.getSharedPreferences("recent_files", Context.MODE_PRIVATE)
 
     fun all(): List<RecentFile> {
@@ -13,7 +13,7 @@ internal class RecentFilesStore(context: Context) {
         for (index in 0 until array.length()) {
             val item = array.optJSONObject(index) ?: continue
             val uri = item.optString("uri")
-            if (uri.isNotEmpty()) files.add(RecentFile(uri, item.optString("name", "無題.txt"), item.optLong("openedAt"), item.optString("localPath").takeIf { it.isNotBlank() }))
+            if (uri.isNotEmpty()) files.add(RecentFile(uri, item.optString("name", context.getString(R.string.untitled_file)), item.optLong("openedAt"), item.optString("localPath").takeIf { it.isNotBlank() }))
         }
         return files.distinctBy { it.uri }.sortedByDescending { it.openedAt }.take(RecentFileHistory.LIMIT)
     }

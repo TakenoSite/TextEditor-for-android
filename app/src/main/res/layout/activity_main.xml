@@ -16,21 +16,21 @@
         android:orientation="horizontal"
         android:background="#EFEFEF">
 
-        <ImageView android:id="@+id/menuButton" android:layout_width="48dp" android:layout_height="match_parent" android:scaleType="center" android:src="@drawable/ic_menu" app:tint="#606060" android:contentDescription="メニュー" />
+        <ImageView android:id="@+id/menuButton" android:layout_width="48dp" android:layout_height="match_parent" android:scaleType="center" android:src="@drawable/ic_menu" app:tint="#606060" android:contentDescription="@string/menu_label" />
         <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center_vertical" android:paddingStart="2dp" android:orientation="vertical">
-            <TextView android:id="@+id/fileTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="middle" android:text="無題.txt" android:textSize="18sp" android:textColor="#222222" />
+            <TextView android:id="@+id/fileTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="middle" android:text="@string/untitled_file" android:textSize="18sp" android:textColor="#222222" />
              <TextView android:id="@+id/fileInfo" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:text="UTF-8 · LF" android:textSize="11sp" android:textColor="#666666" />
-             <TextView android:id="@+id/filePath" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="middle" android:text="新しいファイル" android:textSize="10sp" android:textColor="#666666" />
+             <TextView android:id="@+id/filePath" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="middle" android:text="@string/new_file" android:textSize="10sp" android:textColor="#666666" />
         </LinearLayout>
-        <ImageView android:id="@+id/openTop" android:layout_width="45dp" android:layout_height="match_parent" android:scaleType="center" android:src="@drawable/ic_description" app:tint="#606060" android:contentDescription="ファイル" />
-        <ImageView android:id="@+id/editTop" android:layout_width="45dp" android:layout_height="match_parent" android:scaleType="center" android:src="@drawable/ic_edit" app:tint="#606060" android:contentDescription="編集" />
-        <ImageView android:id="@+id/moreTop" android:layout_width="42dp" android:layout_height="match_parent" android:scaleType="center" android:src="@drawable/ic_more_vert" app:tint="#606060" android:contentDescription="その他" />
+        <ImageView android:id="@+id/openTop" android:layout_width="45dp" android:layout_height="match_parent" android:scaleType="center" android:src="@drawable/ic_description" app:tint="#606060" android:contentDescription="@string/file_label" />
+        <ImageView android:id="@+id/editTop" android:layout_width="45dp" android:layout_height="match_parent" android:scaleType="center" android:src="@drawable/ic_edit" app:tint="#606060" android:contentDescription="@string/markdown_edit" />
+        <ImageView android:id="@+id/moreTop" android:layout_width="42dp" android:layout_height="match_parent" android:scaleType="center" android:src="@drawable/ic_more_vert" app:tint="#606060" android:contentDescription="@string/more_label" />
     </LinearLayout>
 
     <LinearLayout android:id="@+id/searchNoticeCard" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:visibility="gone" android:background="#E5EEE5">
         <TextView android:id="@+id/searchNotice" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:padding="12dp" android:textColor="#333333" android:textSize="14sp" android:accessibilityLiveRegion="polite" />
-        <TextView android:id="@+id/reconnectFile" android:layout_width="wrap_content" android:layout_height="48dp" android:paddingStart="12dp" android:paddingEnd="12dp" android:gravity="center" android:visibility="gone" android:text="再選択" android:textColor="#388E3C" android:textSize="14sp" android:background="?android:attr/selectableItemBackground" android:focusable="true" />
-        <ImageView android:id="@+id/closeSearchNotice" android:layout_width="48dp" android:layout_height="48dp" android:scaleType="center" android:src="@drawable/ic_close" app:tint="#555555" android:background="?android:attr/selectableItemBackgroundBorderless" android:focusable="true" android:contentDescription="検索結果を閉じる" />
+        <TextView android:id="@+id/reconnectFile" android:layout_width="wrap_content" android:layout_height="48dp" android:paddingStart="12dp" android:paddingEnd="12dp" android:gravity="center" android:visibility="gone" android:text="@string/action_reselect" android:textColor="#388E3C" android:textSize="14sp" android:background="?android:attr/selectableItemBackground" android:focusable="true" />
+        <ImageView android:id="@+id/closeSearchNotice" android:layout_width="48dp" android:layout_height="48dp" android:scaleType="center" android:src="@drawable/ic_close" app:tint="#555555" android:background="?android:attr/selectableItemBackgroundBorderless" android:focusable="true" android:contentDescription="@string/close_notice" />
     </LinearLayout>
     <LinearLayout android:layout_width="match_parent" android:layout_height="48dp" android:orientation="horizontal">
         <TextView android:id="@+id/markdownEdit" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="@string/markdown_edit" android:textSize="14sp" android:textColor="#242424" android:focusable="true" android:background="?android:attr/selectableItemBackground" />
@@ -48,14 +48,14 @@
 
     <HorizontalScrollView android:id="@+id/toolBar" android:layout_width="match_parent" android:layout_height="48dp" android:fillViewport="true" android:scrollbars="none" android:background="#EFEFEF">
         <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center_vertical" android:orientation="horizontal">
-            <TextView android:id="@+id/toolOpen" style="@style/ToolItem" android:drawableTop="@drawable/ic_folder_open" android:contentDescription="開く" />
-            <TextView android:id="@+id/toolNew" style="@style/ToolItem" android:drawableTop="@drawable/ic_note_add" android:contentDescription="新規作成" />
-            <TextView android:id="@+id/toolUndo" style="@style/ToolItem" android:drawableTop="@drawable/ic_undo" android:contentDescription="元に戻す" />
-            <TextView android:id="@+id/toolRedo" style="@style/ToolItem" android:drawableTop="@drawable/ic_redo" android:contentDescription="やり直す" />
-            <TextView android:id="@+id/toolSearch" style="@style/ToolItem" android:drawableTop="@drawable/ic_search" android:contentDescription="検索" />
-            <TextView android:id="@+id/toolPrevious" style="@style/ToolItem" android:drawableTop="@drawable/ic_arrow_back" android:contentDescription="前へ" />
-            <TextView android:id="@+id/toolNext" style="@style/ToolItem" android:drawableTop="@drawable/ic_arrow_forward" android:contentDescription="次へ" />
-            <TextView android:id="@+id/toolSave" style="@style/ToolItem" android:drawableTop="@drawable/ic_save" android:contentDescription="保存" />
+            <TextView android:id="@+id/toolOpen" style="@style/ToolItem" android:drawableTop="@drawable/ic_folder_open" android:contentDescription="@string/action_open" />
+            <TextView android:id="@+id/toolNew" style="@style/ToolItem" android:drawableTop="@drawable/ic_note_add" android:contentDescription="@string/action_new" />
+            <TextView android:id="@+id/toolUndo" style="@style/ToolItem" android:drawableTop="@drawable/ic_undo" android:contentDescription="@string/action_undo" />
+            <TextView android:id="@+id/toolRedo" style="@style/ToolItem" android:drawableTop="@drawable/ic_redo" android:contentDescription="@string/action_redo" />
+            <TextView android:id="@+id/toolSearch" style="@style/ToolItem" android:drawableTop="@drawable/ic_search" android:contentDescription="@string/search_title" />
+            <TextView android:id="@+id/toolPrevious" style="@style/ToolItem" android:drawableTop="@drawable/ic_arrow_back" android:contentDescription="@string/action_previous" />
+            <TextView android:id="@+id/toolNext" style="@style/ToolItem" android:drawableTop="@drawable/ic_arrow_forward" android:contentDescription="@string/action_next" />
+            <TextView android:id="@+id/toolSave" style="@style/ToolItem" android:drawableTop="@drawable/ic_save" android:contentDescription="@string/action_save" />
             <TextView android:id="@+id/toolClose" style="@style/ToolItem" android:drawableTop="@drawable/ic_close" android:contentDescription="@string/clear_text_title" />
         </LinearLayout>
     </HorizontalScrollView>

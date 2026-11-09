@@ -34,14 +34,14 @@ import java.util.ArrayDeque
 import java.util.regex.Pattern
 import kotlin.math.roundToInt
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : LocalizedActivity() {
     private lateinit var editor: WhitespaceEditText
     private lateinit var lines: LineNumberView
     private lateinit var title: TextView
     private lateinit var location: TextView
     private var document: Uri? = null
     private var localDocumentPath: String? = null
-    private var name = "無題.txt"
+    private var name = ""
     private var dirty = false
     private var changing = false
     private var readOnly = false
@@ -120,6 +120,7 @@ class MainActivity : AppCompatActivity() {
         appearanceDark = EditorAppearance.isDark(this)
         setTheme(EditorAppearance.theme(this))
         super.onCreate(savedInstanceState)
+        name = getString(R.string.untitled_file)
         // Restore the editor payload from app-private storage, not a large Android Bundle.
         val editorState = savedInstanceState?.let { saved ->
             val token = saved.getString("editor_state_token")
@@ -127,7 +128,7 @@ class MainActivity : AppCompatActivity() {
                 EditorStateStore(this).load(token).also { stateToken = token }
             } catch (e: Exception) {
                 android.util.Log.e("EditorState", "Unable to restore editor snapshot", e)
-                message("編集状態を復元できませんでした。保存済みファイルを開き直します。")
+                message(getString(R.string.restore_failed))
                 null
             }
         }
@@ -160,7 +161,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.reconnectFile).setOnClickListener {
             historyRetryUri?.let { old ->
                 if (!StorageAccess.granted(this)) {
-                    if (!storagePermission.request()) showFileAccessIssue(old, "権限設定を開けませんでした。設定のファイルアクセスを確認してください。")
+                    if (!storagePermission.request()) showFileAccessIssue(old, getString(R.string.access_settings_hint))
                     return@setOnClickListener
                 }
                 confirmDiscard {
@@ -228,7 +229,7 @@ class MainActivity : AppCompatActivity() {
             editor.post { editor.scrollTo(editorState.getInt("scrollX"), editorState.getInt("scrollY")) }
             editor.isFocusableInTouchMode = !readOnly
             refresh()
-            historyRetryUri?.let { showFileAccessIssue(it, editorState.getString("history_issue") ?: "ファイルを再選択してアクセス権を更新してください。") }
+            historyRetryUri?.let { showFileAccessIssue(it, getString(R.string.access_reselect_hint)) }
         } else if (intent?.action == Intent.ACTION_VIEW || intent?.action == Intent.ACTION_EDIT) {
             intent.data?.let { load(it, false) }
         } else {
@@ -278,13 +279,14 @@ class MainActivity : AppCompatActivity() {
             androidState.putString("editor_state_token", stateToken)
         } catch (e: Exception) {
             android.util.Log.e("EditorState", "Unable to save editor snapshot", e)
-            message("編集状態を退避できませんでした。未保存の変更を手動で保存してください。")
+            message(getString(R.string.snapshot_failed))
         }
         super.onSaveInstanceState(androidState)
     }
 
     override fun onResume() {
         super.onResume()
+        if (languageChangePending) return
         if (appearanceDark != EditorAppearance.isDark(this)) { recreate(); return }
         applyEditorSettings()
     }
@@ -298,6 +300,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPostResume() {
         super.onPostResume()
+        if (languageChangePending) return
         previewLifecycle.resume()
         handler.removeCallbacks(renderPreview)
         handler.post(renderPreview)
@@ -383,12 +386,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun refresh() {
         title.text = name + if (dirty) " *" else ""
-        location.text = localDocumentPath ?: document?.let { if (it.scheme == "file") it.path else it.toString() } ?: "新しいファイル"
+        location.text = localDocumentPath ?: document?.let { if (it.scheme == "file") it.path else it.toString() } ?: getString(R.string.new_file)
         val output = LineEndings.encode(editor.text.toString(), originalSource)
         editor.lineBreakLabels = LineEndings.labels(output)
         editor.invalidate()
         findViewById<TextView>(R.id.fileInfo).apply {
-            text = "UTF-8 · ${LineEndings.label(output)}"
+            text = "UTF-8 · ${if (LineEndings.label(output) == "混在") getString(R.string.mixed_endings) else LineEndings.label(output)}"
             visibility = View.VISIBLE
         }
         lines.updateText(editor.text ?: "")
@@ -410,7 +413,7 @@ class MainActivity : AppCompatActivity() {
         setPreview(false)
         document = null
         localDocumentPath = null
-        name = "無題.txt"
+        name = getString(R.string.untitled_file)
         originalSource = ""
         dirty = false
         undo.clear(); redo.clear()
@@ -453,12 +456,12 @@ class MainActivity : AppCompatActivity() {
             })
             column.addView(row)
         }
-        item(R.drawable.ic_add, "新規作成") { confirmDiscard { newDocument() } }
-        item(R.drawable.ic_folder_open, "開く") { open() }
-        item(R.drawable.ic_save, "保存", dirty) { save(false) }
-        item(R.drawable.ic_content_copy, "名前を付けて保存") { save(true) }
-        item(R.drawable.ic_refresh, "再読み込み", document != null) { reload() }
-        item(R.drawable.ic_close, "閉じる") { confirmDiscard { newDocument() } }
+        item(R.drawable.ic_add, getString(R.string.action_new)) { confirmDiscard { newDocument() } }
+        item(R.drawable.ic_folder_open, getString(R.string.action_open)) { open() }
+        item(R.drawable.ic_save, getString(R.string.action_save), dirty) { save(false) }
+        item(R.drawable.ic_content_copy, getString(R.string.action_save_as)) { save(true) }
+        item(R.drawable.ic_refresh, getString(R.string.action_reload), document != null) { reload() }
+        item(R.drawable.ic_close, getString(R.string.action_close)) { confirmDiscard { newDocument() } }
         val statusBarHeight = resources.getIdentifier("status_bar_height", "dimen", "android")
             .takeIf { it != 0 }?.let { resources.getDimensionPixelSize(it) } ?: dp(24)
         popup.showAtLocation(findViewById(R.id.openTop), Gravity.TOP or Gravity.RIGHT, 0, statusBarHeight)
@@ -490,15 +493,15 @@ class MainActivity : AppCompatActivity() {
             historyRetryUri = null
             findViewById<View>(R.id.searchNoticeCard).visibility = View.GONE
             if (persist && uri.scheme == "content" && !hasPersistentReadAccess(uri) && !(StorageAccess.granted(this) && localDocumentPath != null)) {
-                showFileAccessIssue(uri, "このファイルのアクセス権を保持できませんでした。再選択からファイルを選び直してください。")
+                showFileAccessIssue(uri, getString(R.string.access_not_persisted))
             }
             editor.alpha = .78f
             editor.animate().alpha(1f).setDuration(140).start()
             setPreview(MarkdownRenderer.previewOnOpen(name))
             true
         } catch (e: Exception) {
-            if (fromHistory) showFileAccessIssue(uri, if (!StorageAccess.granted(this)) "すべてのファイルへのアクセスを許可してください。" else "ファイルを開けませんでした。移動・削除、またはファイルの提供元を確認してください。")
-            else message("開けませんでした: ${e.localizedMessage}")
+            if (fromHistory) showFileAccessIssue(uri, getString(if (!StorageAccess.granted(this)) R.string.access_request else R.string.open_failed_hint))
+            else message(getString(R.string.open_failed, e.localizedMessage ?: ""))
             false
         }
     }
@@ -507,7 +510,7 @@ class MainActivity : AppCompatActivity() {
         searchMessage(text)
         historyRetryUri = uri
         findViewById<TextView>(R.id.reconnectFile).apply {
-            this.text = if (StorageAccess.granted(this@MainActivity)) "再選択" else "アクセスを許可"
+            setText(if (StorageAccess.granted(this@MainActivity)) R.string.action_reselect else R.string.action_grant)
             setTextColor(colors.accent); visibility = View.VISIBLE
         }
     }
@@ -526,12 +529,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun displayName(uri: Uri): String {
-        if (uri.scheme == "file") return uri.lastPathSegment ?: "無題.txt"
+        if (uri.scheme == "file") return uri.lastPathSegment ?: getString(R.string.untitled_file)
         return try {
             contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
                 if (cursor.moveToFirst()) cursor.getString(0) else null
-            } ?: uri.lastPathSegment ?: "無題.txt"
-        } catch (_: Exception) { uri.lastPathSegment ?: "無題.txt" }
+            } ?: uri.lastPathSegment ?: getString(R.string.untitled_file)
+        } catch (_: Exception) { uri.lastPathSegment ?: getString(R.string.untitled_file) }
     }
 
     private fun save(asNew: Boolean) {
@@ -545,19 +548,19 @@ class MainActivity : AppCompatActivity() {
             dirty = false
             rememberRecent(uri)
             refresh()
-            message("保存しました")
+            message(getString(R.string.save_success))
         } catch (e: Exception) {
-            AlertDialog.Builder(this).setMessage("上書きできませんでした。別名で保存しますか？\n${e.localizedMessage}")
-                .setPositiveButton("別名で保存") { _, _ -> save(true) }.setNegativeButton("キャンセル", null).show()
+            AlertDialog.Builder(this).setMessage(getString(R.string.save_failed, e.localizedMessage ?: ""))
+                .setPositiveButton(R.string.save_copy) { _, _ -> save(true) }.setNegativeButton(R.string.action_cancel, null).show()
         }
     }
 
     private fun confirmDiscard(action: () -> Unit) {
         if (!dirty) { action(); return }
-        AlertDialog.Builder(this).setTitle("未保存の変更")
-            .setMessage("変更が保存されていません。破棄して続行しますか？")
-            .setPositiveButton("破棄") { _, _ -> action() }
-            .setNegativeButton("キャンセル", null).show()
+        AlertDialog.Builder(this).setTitle(R.string.unsaved_title)
+            .setMessage(R.string.unsaved_confirm)
+            .setPositiveButton(R.string.action_discard) { _, _ -> action() }
+            .setNegativeButton(R.string.action_cancel, null).show()
     }
 
     private fun clearEditorText() {
@@ -583,11 +586,11 @@ class MainActivity : AppCompatActivity() {
     private fun searchDialog() {
         setPreview(false)
         val panel = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(22), dp(8), dp(22), 0) }
-        val search = EditText(this).apply { hint = "検索テキスト"; setSingleLine(true); setText(query) }
-        val replacement = EditText(this).apply { hint = "以下に置き換え"; setSingleLine(true) }
-        val case = CheckBox(this).apply { text = "大文字と小文字を区別"; isChecked = matchCase }
-        val regex = CheckBox(this).apply { text = "正規表現"; isChecked = useRegex }
-        val wrap = CheckBox(this).apply { text = "一周する"; isChecked = wrapSearch }
+        val search = EditText(this).apply { setHint(R.string.search_hint); setSingleLine(true); setText(query) }
+        val replacement = EditText(this).apply { setHint(R.string.replacement_hint); setSingleLine(true) }
+        val case = CheckBox(this).apply { setText(R.string.search_case); isChecked = matchCase }
+        val regex = CheckBox(this).apply { setText(R.string.search_regex); isChecked = useRegex }
+        val wrap = CheckBox(this).apply { setText(R.string.search_wrap); isChecked = wrapSearch }
         listOf(search, replacement, case, regex, wrap).forEach(panel::addView)
         val status = TextView(this).apply {
             text = ""
@@ -605,13 +608,13 @@ class MainActivity : AppCompatActivity() {
         statusCard.addView(ImageView(this).apply {
             setImageResource(R.drawable.ic_close)
             scaleType = ImageView.ScaleType.CENTER
-            contentDescription = "検索結果を閉じる"
+            contentDescription = getString(R.string.close_notice)
             isFocusable = true
             setOnClickListener { statusCard.visibility = View.GONE }
         }, LinearLayout.LayoutParams(dp(48), dp(48)))
         panel.addView(statusCard)
         searchCardStatus = status
-        val dialog = AlertDialog.Builder(this).setTitle("検索").setView(panel).setNegativeButton("閉じる", null).create()
+        val dialog = AlertDialog.Builder(this).setTitle(R.string.search_title).setView(panel).setNegativeButton(R.string.action_close, null).create()
         dialog.setOnDismissListener { if (searchCardStatus === status) searchCardStatus = null }
         fun options() { query = search.text.toString(); matchCase = case.isChecked; useRegex = regex.isChecked; wrapSearch = wrap.isChecked }
         val actions = LinearLayout(this).apply { gravity = Gravity.END; setPadding(dp(12), 0, dp(12), dp(8)) }
@@ -621,18 +624,18 @@ class MainActivity : AppCompatActivity() {
                 setOnClickListener { statusCard.visibility = View.VISIBLE; options(); click() }
             })
         }
-        add("すべて置換") { replaceAll(replacement.text.toString()) }
-        add("置換") { replaceOne(replacement.text.toString()) }
-        add("検索") { findMatch(true) }
+        add(getString(R.string.replace_all)) { replaceAll(replacement.text.toString()) }
+        add(getString(R.string.replace_one)) { replaceOne(replacement.text.toString()) }
+        add(getString(R.string.search_title)) { findMatch(true) }
         panel.addView(actions)
         dialog.show()
     }
 
     private fun pattern(): Pattern? = try {
-        if (query.isEmpty()) { searchMessage("検索テキストを入力してください"); null }
+        if (query.isEmpty()) { searchMessage(getString(R.string.search_empty)); null }
         else SearchEngine.compile(query, useRegex, matchCase)
     } catch (e: java.util.regex.PatternSyntaxException) {
-        searchMessage("正規表現に誤りがあります: ${e.description}（位置 ${e.index + 1}）")
+        searchMessage(getString(R.string.regex_error, e.description, e.index + 1))
         null
     }
 
@@ -649,11 +652,11 @@ class MainActivity : AppCompatActivity() {
             while (matcher.find()) { if (matcher.end() <= end) range = matcher.start() until matcher.end() else break }
             if (range == null && wrapSearch) { matcher.reset(); while (matcher.find()) range = matcher.start() until matcher.end() }
         }
-        if (range == null) searchMessage("一致するテキストが見つかりませんでした")
+        if (range == null) searchMessage(getString(R.string.search_not_found))
         else {
             editor.requestFocus(); editor.setSelection(range.first, range.last + 1)
             val line = text.take(range.first).count { it == '\n' } + 1
-            searchMessage("${line}行目に一致しました（${range.last + 1 - range.first}文字）")
+            searchMessage(getString(R.string.search_found, line, range.last + 1 - range.first))
         }
     }
 
@@ -667,23 +670,23 @@ class MainActivity : AppCompatActivity() {
             if (result == null) { findMatch(true); return }
             editor.text?.replace(start, end, result)
             findMatch(true)
-        } catch (_: Exception) { searchMessage("置換式を確認してください（グループ参照は \$1 形式です）") }
+        } catch (_: Exception) { searchMessage(getString(R.string.replacement_error)) }
     }
 
     private fun replaceAll(with: String) {
         val p = pattern() ?: return
         val old = editor.text.toString()
         val matcher = p.matcher(old)
-        if (!matcher.find()) { searchMessage("一致するテキストが見つかりませんでした"); return }
+        if (!matcher.find()) { searchMessage(getString(R.string.search_not_found)); return }
         try {
             val result = SearchEngine.replaceAll(p, old, with, useRegex)
-            editor.setText(result); searchMessage("置換しました")
-        } catch (_: Exception) { searchMessage("置換に失敗しました。置換式のグループ参照などを確認してください") }
+            editor.setText(result); searchMessage(getString(R.string.replace_success))
+        } catch (_: Exception) { searchMessage(getString(R.string.replace_failed)) }
     }
 
     private fun showMore(anchor: View) {
         PopupMenu(this, anchor).apply {
-            listOf("検索と置換", "共有", "行番号へ行く", "統計", "折り返し", "読み取り専用", "拡大率")
+            listOf(R.string.search_replace, R.string.action_share, R.string.go_to_line, R.string.stats_title, R.string.word_wrap, R.string.read_only, R.string.zoom_title).map { getString(it) }
                 .forEachIndexed { index, label -> menu.add(0, index, index, label) }
             setOnMenuItemClickListener { item ->
                 when (item.itemId) {
@@ -692,7 +695,7 @@ class MainActivity : AppCompatActivity() {
                     2 -> goToLine()
                     3 -> stats()
                     4 -> { val wrap = !prefs.getBoolean("wrap", false); prefs.edit().putBoolean("wrap", wrap).apply(); editor.setWordWrapEnabled(wrap) }
-                    5 -> { readOnly = !readOnly; editor.isFocusableInTouchMode = !readOnly; message(if (readOnly) "読み取り専用" else "編集できます") }
+                    5 -> { readOnly = !readOnly; editor.isFocusableInTouchMode = !readOnly; message(getString(if (readOnly) R.string.read_only else R.string.can_edit)) }
                     6 -> showZoomDialog()
                 }
                 true
@@ -714,12 +717,12 @@ class MainActivity : AppCompatActivity() {
             gravity = Gravity.CENTER
             setTextColor(colors.text)
             setText(zoomPercent.roundToInt().toString())
-            contentDescription = "拡大率 パーセント"
+            contentDescription = getString(R.string.zoom_percent)
         }
         fun applyInput(): Boolean {
             val number = input.text.toString().toFloatOrNull()
             if (number == null || number !in EditorZoom.MIN..EditorZoom.MAX) {
-                input.error = "25〜400で入力してください"
+                input.error = getString(R.string.zoom_invalid)
                 return false
             }
             applyZoom(number)
@@ -738,12 +741,12 @@ class MainActivity : AppCompatActivity() {
             setImageResource(icon); setColorFilter(colors.secondary); scaleType = ImageView.ScaleType.CENTER
             contentDescription = label; isFocusable = true; setOnClickListener { action() }
         }
-        row.addView(zoomButton(R.drawable.ic_remove, "縮小") { step(-10) }, LinearLayout.LayoutParams(dp(48), dp(48)))
+        row.addView(zoomButton(R.drawable.ic_remove, getString(R.string.zoom_out)) { step(-10) }, LinearLayout.LayoutParams(dp(48), dp(48)))
         row.addView(input, LinearLayout.LayoutParams(0, dp(48), 1f))
         row.addView(TextView(this).apply { text = "%"; textSize = 16f; setTextColor(colors.text) })
-        row.addView(zoomButton(R.drawable.ic_add, "拡大") { step(10) }, LinearLayout.LayoutParams(dp(48), dp(48)))
-        val dialog = AlertDialog.Builder(this).setTitle("拡大率").setView(row)
-            .setPositiveButton("完了", null).create()
+        row.addView(zoomButton(R.drawable.ic_add, getString(R.string.zoom_in)) { step(10) }, LinearLayout.LayoutParams(dp(48), dp(48)))
+        val dialog = AlertDialog.Builder(this).setTitle(R.string.zoom_title).setView(row)
+            .setPositiveButton(R.string.action_done, null).create()
         input.setOnEditorActionListener { _, action, _ ->
             if (action == EditorInfo.IME_ACTION_DONE) {
                 if (applyInput()) {
@@ -802,7 +805,7 @@ class MainActivity : AppCompatActivity() {
         val shade = View(this).apply {
             setBackgroundColor(0x66000000)
             alpha = 0f
-            contentDescription = "メニューを閉じる"
+            contentDescription = getString(R.string.close_menu)
             setOnClickListener { closeNavigation() }
         }
         overlay.addView(shade, FrameLayout.LayoutParams(-1, -1))
@@ -832,7 +835,7 @@ class MainActivity : AppCompatActivity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(8), dp(12), dp(8), dp(16))
         }
-        val items = arrayOf("新規作成", "ファイルを開く", "最近使用したファイル", "共有", "設定", "ヘルプ")
+        val items = arrayOf(R.string.action_new, R.string.action_open_file, R.string.recent_title, R.string.action_share, R.string.settings_title, R.string.help_title).map { getString(it) }
         items.forEachIndexed { index, label ->
             list.addView(TextView(this).apply {
                 text = label
@@ -892,24 +895,24 @@ class MainActivity : AppCompatActivity() {
 
     private fun goToLine() {
         setPreview(false)
-        val input = EditText(this).apply { inputType = android.text.InputType.TYPE_CLASS_NUMBER; hint = "行番号" }
-        AlertDialog.Builder(this).setTitle("行番号へ行く").setView(input).setPositiveButton("移動") { _, _ ->
+        val input = EditText(this).apply { inputType = android.text.InputType.TYPE_CLASS_NUMBER; setHint(R.string.line_number) }
+        AlertDialog.Builder(this).setTitle(R.string.go_to_line).setView(input).setPositiveButton(R.string.action_go) { _, _ ->
             val n = (input.text.toString().toIntOrNull() ?: 1).coerceAtLeast(1)
             var pos = 0
             repeat((n - 1).coerceAtMost(editor.lineCount)) { val next = editor.text.toString().indexOf('\n', pos); if (next >= 0) pos = next + 1 }
             editor.requestFocus(); editor.setSelection(pos)
-        }.setNegativeButton("キャンセル", null).show()
+        }.setNegativeButton(R.string.action_cancel, null).show()
     }
 
     private fun stats() {
         val text = editor.text.toString()
-        AlertDialog.Builder(this).setTitle("統計").setMessage("行数: ${text.count { it == '\n' } + 1}\n文字数: ${text.length}\n単語数: ${text.trim().split(Regex("\\s+")).count { it.isNotBlank() }}")
-            .setPositiveButton("閉じる", null).show()
+        AlertDialog.Builder(this).setTitle(R.string.stats_title).setMessage(getString(R.string.stats_body, text.count { it == '\n' } + 1, text.length, text.trim().split(Regex("\\s+")).count { it.isNotBlank() }))
+            .setPositiveButton(R.string.action_close, null).show()
     }
 
     private fun share() {
-        try { startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, editor.text.toString()), "テキストを共有")) }
-        catch (_: ActivityNotFoundException) { message("共有できるアプリがありません") }
+        try { startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, editor.text.toString()), getString(R.string.share_text))) }
+        catch (_: ActivityNotFoundException) { message(getString(R.string.share_failed)) }
     }
 
     private fun keyboard() { (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(editor, InputMethodManager.SHOW_IMPLICIT) }

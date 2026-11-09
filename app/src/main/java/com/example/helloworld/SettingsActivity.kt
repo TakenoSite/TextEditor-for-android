@@ -9,10 +9,14 @@ import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.SeekBar
 import android.widget.TextView
+import android.widget.Spinner
+import android.widget.ArrayAdapter
+import android.widget.AdapterView
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 
-class SettingsActivity : AppCompatActivity() {
+class SettingsActivity : LocalizedActivity() {
     private val prefs by lazy { getSharedPreferences("editor", MODE_PRIVATE) }
     private lateinit var colors: EditorAppearance
     private lateinit var categories: LinearLayout
@@ -22,7 +26,7 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onResume() { super.onResume(); updateStorageAccess() }
     private fun updateStorageAccess() {
-        storageButton?.text = if (StorageAccess.granted(this)) "すべてのファイルへのアクセス：許可済み" else "すべてのファイルへのアクセスを許可"
+        storageButton?.text = getString(if (StorageAccess.granted(this)) R.string.access_granted else R.string.access_allow)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,12 +40,12 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.settingsTitle).setTextColor(colors.text)
         findViewById<ImageView>(R.id.settingsBack).apply { setColorFilter(colors.secondary); setOnClickListener { finish() } }
         categories = findViewById(R.id.settingsCategories)
-        val themeCard = category("テーマ")
+        val themeCard = category(getString(R.string.settings_theme))
         val radio = RadioGroup(this).apply { id = nextId++; orientation = RadioGroup.VERTICAL }
         val lightId = nextId++
         val darkId = nextId++
-        radio.addView(RadioButton(this).apply { id = lightId; text = "ライトモード"; setTextColor(colors.text); minimumHeight = dp(48) })
-        radio.addView(RadioButton(this).apply { id = darkId; text = "ダークモード"; setTextColor(colors.text); minimumHeight = dp(48) })
+        radio.addView(RadioButton(this).apply { id = lightId; setText(R.string.settings_light); setTextColor(colors.text); minimumHeight = dp(48) })
+        radio.addView(RadioButton(this).apply { id = darkId; setText(R.string.settings_dark); setTextColor(colors.text); minimumHeight = dp(48) })
         radio.check(if (colors.dark) darkId else lightId)
         radio.setOnCheckedChangeListener { _, checked ->
             val dark = checked == darkId
@@ -49,34 +53,53 @@ class SettingsActivity : AppCompatActivity() {
         }
         themeCard.addView(radio)
 
-        val display = category("編集表示")
-        toggle(display, "行番号を表示", "numbers", true)
-        toggle(display, "ワードラップ", "wrap", false)
-        toggle(display, "ピンチ操作で拡大・縮小", "pinch_zoom", false)
-        slider(display, "フォントサイズ", 10, 32, prefs.getFloat("size", 16f).toInt(), "sp") {
+        val display = category(getString(R.string.settings_display))
+        toggle(display, getString(R.string.settings_numbers), "numbers", true)
+        toggle(display, getString(R.string.word_wrap), "wrap", false)
+        toggle(display, getString(R.string.settings_pinch), "pinch_zoom", false)
+        slider(display, getString(R.string.settings_font), 10, 32, prefs.getFloat("size", 16f).toInt(), "sp") {
             prefs.edit().putFloat("size", it.toFloat()).apply()
         }
-        slider(display, "行間", 0, 16, prefs.getInt("spacing", 2), "dp") {
+        slider(display, getString(R.string.settings_spacing), 0, 16, prefs.getInt("spacing", 2), "dp") {
             prefs.edit().putInt("spacing", it).apply()
         }
 
-        val symbols = category("記号・ファイル情報")
-        toggle(symbols, "改行コードを表示", "show_breaks", false)
-        toggle(symbols, "タブ記号を表示", "show_tabs", false)
-        toggle(symbols, "空白記号を表示", "show_spaces", false)
+        val symbols = category(getString(R.string.settings_symbols))
+        toggle(symbols, getString(R.string.settings_breaks), "show_breaks", false)
+        toggle(symbols, getString(R.string.settings_tabs), "show_tabs", false)
+        toggle(symbols, getString(R.string.settings_spaces), "show_spaces", false)
 
-        val saving = category("自動保存")
-        toggle(saving, "変更を自動保存", "autosave", false)
-        slider(saving, "自動保存までの時間", 1, 10, prefs.getInt("save_minutes", 1), "分") {
+        val saving = category(getString(R.string.settings_autosave))
+        toggle(saving, getString(R.string.settings_save_changes), "autosave", false)
+        slider(saving, getString(R.string.settings_save_delay), 1, 10, prefs.getInt("save_minutes", 1), getString(R.string.minutes_unit)) {
             prefs.edit().putInt("save_minutes", it).apply()
         }
-        val files = category("ファイルアクセス")
+        val files = category(getString(R.string.settings_files))
         storageButton = TextView(this).apply {
             textSize = 16f; setTextColor(colors.accent); minimumHeight = dp(56)
             gravity = Gravity.CENTER_VERTICAL; isFocusable = true
-            setOnClickListener { if (!storagePermission.request()) text = "権限設定を開けませんでした" }
+            setOnClickListener { if (!storagePermission.request()) setText(R.string.access_settings_error) }
         }
         files.addView(storageButton, LinearLayout.LayoutParams(-1, -2))
+        val languageCard = category(getString(R.string.settings_language))
+        val selected = AppLanguage.selected(this)
+        languageCard.addView(Spinner(this, Spinner.MODE_DROPDOWN).apply {
+            id = R.id.languageSelector
+            contentDescription = getString(R.string.settings_language)
+            adapter = ArrayAdapter(this@SettingsActivity, android.R.layout.simple_spinner_item,
+                listOf("日本語", "English")).apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+            setSelection(AppLanguage.tags.indexOf(selected), false)
+            onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onNothingSelected(parent: AdapterView<*>?) {}
+                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                    val tag = AppLanguage.tags[position]
+                    if (tag != AppLanguage.selected(this@SettingsActivity)) {
+                        prefs.edit().putString("language", tag).apply()
+                        recreate()
+                    }
+                }
+            }
+        }, LinearLayout.LayoutParams(-1, dp(56)))
     }
 
     private fun category(label: String): LinearLayout {
