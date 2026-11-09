@@ -1,4 +1,9 @@
 <resources>
+    <string name="choice_collapsed">閉じています。押して選択</string>
+    <string name="choice_expanded">選択肢を表示中</string>
+    <string name="language_welcome">ようこそ / Welcome</string>
+    <string name="language_setup_title">言語を選択\nChoose your language</string>
+    <string name="language_continue">はじめる / Continue</string>
     <string name="help_language_heading">8. 言語を切り替える</string>
     <string name="help_language_body">設定の一番下にある「言語 / Language」のプルダウンで、日本語またはEnglishを選びます。選択は再起動後も維持されます。アプリの表示だけを切り替え、端末の言語・本文・既存のファイル名は変更しません。</string>
     <string name="settings_title">設定</string>
@@ -26,8 +31,8 @@
     <string name="access_settings_error">権限設定を開けませんでした</string>
     <string name="recent_title">最近使用したファイル</string>
     <string name="recent_empty">履歴はありません</string>
-    <string name="untitled_file">無題.txt</string>
-    <string name="new_file">新しいファイル</string>
+    <string name="untitled_file">新規ファイル</string>
+    <string name="new_file">新規ファイル</string>
     <string name="menu_label">メニュー</string>
     <string name="file_label">ファイル</string>
     <string name="more_label">その他</string>

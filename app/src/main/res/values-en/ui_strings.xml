@@ -1,4 +1,9 @@
 <resources>
+    <string name="choice_collapsed">Collapsed. Activate to select</string>
+    <string name="choice_expanded">Options expanded</string>
+    <string name="language_welcome">ようこそ / Welcome</string>
+    <string name="language_setup_title">言語を選択\nChoose your language</string>
+    <string name="language_continue">はじめる / Continue</string>
     <string name="help_language_heading">8. Change language</string>
     <string name="help_language_body">At the bottom of Settings, open the Language dropdown and choose 日本語 or English. Your choice is retained after restarting. Only the app interface changes; the device language, document text, and existing file names remain unchanged.</string>
     <string name="settings_title">Settings</string>
@@ -26,7 +31,7 @@
     <string name="access_settings_error">Unable to open permission settings</string>
     <string name="recent_title">Recent files</string>
     <string name="recent_empty">No recent files</string>
-    <string name="untitled_file">Untitled.txt</string>
+    <string name="untitled_file">New file</string>
     <string name="new_file">New file</string>
     <string name="menu_label">Menu</string>
     <string name="file_label">File</string>

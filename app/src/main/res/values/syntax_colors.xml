@@ -1,0 +1,15 @@
+<resources>
+    <!-- Bundled offline palettes, on #EFEFEF (light) and #202124 (dark). -->
+    <color name="syntax_light_keyword">#6F2687</color>
+    <color name="syntax_light_string">#23652C</color>
+    <color name="syntax_light_comment">#586269</color>
+    <color name="syntax_light_number">#8A4000</color>
+    <color name="syntax_light_type">#005B7F</color>
+    <color name="syntax_light_directive">#843126</color>
+    <color name="syntax_dark_keyword">#D8ABF2</color>
+    <color name="syntax_dark_string">#A8D99B</color>
+    <color name="syntax_dark_comment">#ADB6BF</color>
+    <color name="syntax_dark_number">#F1BE8C</color>
+    <color name="syntax_dark_type">#8FD1EA</color>
+    <color name="syntax_dark_directive">#F4ACAA</color>
+</resources>

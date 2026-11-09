@@ -6,13 +6,13 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.view.View
 
-internal class EditorAppearance(val dark: Boolean) {
-    val background = Color.parseColor(if (dark) "#202124" else "#EFEFEF")
-    val surface = Color.parseColor(if (dark) "#292B2F" else "#FAFAFA")
-    val text = Color.parseColor(if (dark) "#ECEFF1" else "#242424")
-    val secondary = Color.parseColor(if (dark) "#B0B5BC" else "#666666")
-    val accent = Color.parseColor(if (dark) "#81C784" else "#388E3C")
-    val notice = Color.parseColor(if (dark) "#2D4032" else "#E5EEE5")
+internal class EditorAppearance(val dark: Boolean, monochrome: Boolean = false) {
+    val background = Color.parseColor(if (dark) { if (monochrome) "#202020" else "#202124" } else "#EFEFEF")
+    val surface = Color.parseColor(if (dark) { if (monochrome) "#292929" else "#292B2F" } else "#FAFAFA")
+    val text = Color.parseColor(if (dark) { if (monochrome) "#ECECEC" else "#ECEFF1" } else "#242424")
+    val secondary = Color.parseColor(if (dark) { if (monochrome) "#B5B5B5" else "#B0B5BC" } else "#666666")
+    val accent = Color.parseColor(if (monochrome) { if (dark) "#D0D0D0" else "#484848" } else if (dark) "#81C784" else "#388E3C")
+    val notice = Color.parseColor(if (monochrome) { if (dark) "#414141" else "#E1E1E1" } else if (dark) "#2D4032" else "#E5EEE5")
     val gutter = Color.parseColor(if (dark) "#27292C" else "#E9E9E9")
     val tint get() = ColorStateList.valueOf(secondary)
 

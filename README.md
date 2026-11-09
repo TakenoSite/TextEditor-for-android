@@ -12,6 +12,8 @@
 - 設定の最下部の言語プルダウンから日本語／Englishを切り替え（再起動後も保持）
 - 実際の本文レイアウトに追従する行番号と、縦フリックの慣性スクロール
 - README.mdなどのMarkdownプレビュー（見出し・リスト・コード・表など。未保存本文にも対応）
+- 11言語のオフライン構文ハイライト（C/C++、Python、JavaScript/TypeScript、Java、Kotlin、C#、Go、Rust、Swift）。配色・判定ルールを同梱、ライト／ダーク対応。詳細は `docs/syntax-highlighting.md`。
+- 編集／Markdownプレビューのタブは`.md`ファイルを開いている間だけ表示。
 
 `.md`ファイルは開くと自動で整形表示します（大文字小文字不問）。「編集」または戻る操作で原文へ戻り、上部の「Markdownプレビュー」で再表示できます。HTML実行・画像読み込み・相対リンクには対応しません。詳細は `docs/markdown-preview.md` を参照してください。
 

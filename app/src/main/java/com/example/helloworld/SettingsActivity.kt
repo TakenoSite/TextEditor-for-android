@@ -5,15 +5,8 @@ import android.os.Bundle
 import android.view.Gravity
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.RadioButton
-import android.widget.RadioGroup
 import android.widget.SeekBar
 import android.widget.TextView
-import android.widget.Spinner
-import android.widget.ArrayAdapter
-import android.widget.AdapterView
-import android.view.View
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 
 class SettingsActivity : LocalizedActivity() {
@@ -41,17 +34,13 @@ class SettingsActivity : LocalizedActivity() {
         findViewById<ImageView>(R.id.settingsBack).apply { setColorFilter(colors.secondary); setOnClickListener { finish() } }
         categories = findViewById(R.id.settingsCategories)
         val themeCard = category(getString(R.string.settings_theme))
-        val radio = RadioGroup(this).apply { id = nextId++; orientation = RadioGroup.VERTICAL }
-        val lightId = nextId++
-        val darkId = nextId++
-        radio.addView(RadioButton(this).apply { id = lightId; setText(R.string.settings_light); setTextColor(colors.text); minimumHeight = dp(48) })
-        radio.addView(RadioButton(this).apply { id = darkId; setText(R.string.settings_dark); setTextColor(colors.text); minimumHeight = dp(48) })
-        radio.check(if (colors.dark) darkId else lightId)
-        radio.setOnCheckedChangeListener { _, checked ->
-            val dark = checked == darkId
+        themeCard.addView(AppChoiceUi.dropdown(this, colors, getString(R.string.settings_theme), listOf(
+            AppChoiceUi.Choice(getString(R.string.settings_light), R.drawable.ic_theme_light),
+            AppChoiceUi.Choice(getString(R.string.settings_dark), R.drawable.ic_theme_dark)
+        ), if (colors.dark) 1 else 0) { index ->
+            val dark = index == 1
             if (dark != colors.dark) { prefs.edit().putBoolean("dark", dark).apply(); recreate() }
-        }
-        themeCard.addView(radio)
+        }, LinearLayout.LayoutParams(-1, -2))
 
         val display = category(getString(R.string.settings_display))
         toggle(display, getString(R.string.settings_numbers), "numbers", true)
@@ -83,23 +72,15 @@ class SettingsActivity : LocalizedActivity() {
         files.addView(storageButton, LinearLayout.LayoutParams(-1, -2))
         val languageCard = category(getString(R.string.settings_language))
         val selected = AppLanguage.selected(this)
-        languageCard.addView(Spinner(this, Spinner.MODE_DROPDOWN).apply {
-            id = R.id.languageSelector
-            contentDescription = getString(R.string.settings_language)
-            adapter = ArrayAdapter(this@SettingsActivity, android.R.layout.simple_spinner_item,
-                listOf("日本語", "English")).apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
-            setSelection(AppLanguage.tags.indexOf(selected), false)
-            onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                override fun onNothingSelected(parent: AdapterView<*>?) {}
-                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                    val tag = AppLanguage.tags[position]
-                    if (tag != AppLanguage.selected(this@SettingsActivity)) {
-                        prefs.edit().putString("language", tag).apply()
-                        recreate()
-                    }
-                }
+        languageCard.addView(AppChoiceUi.dropdown(this, colors, getString(R.string.settings_language), listOf(
+            AppChoiceUi.Choice("日本語", R.drawable.ic_language), AppChoiceUi.Choice("English", R.drawable.ic_language)
+        ), AppLanguage.tags.indexOf(selected)) { index ->
+            val tag = AppLanguage.tags[index]
+            if (tag != selected) {
+                prefs.edit().putString("language", tag).putBoolean("language_setup_complete", true).apply()
+                recreate()
             }
-        }, LinearLayout.LayoutParams(-1, dp(56)))
+        }.apply { id = R.id.languageSelector }, LinearLayout.LayoutParams(-1, -2))
     }
 
     private fun category(label: String): LinearLayout {

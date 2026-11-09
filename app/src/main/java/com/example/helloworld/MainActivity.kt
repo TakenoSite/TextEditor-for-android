@@ -61,11 +61,12 @@ class MainActivity : LocalizedActivity() {
     private var historyRetryUri: Uri? = null
     private var reconnectSourceUri: Uri? = null
     private var preview: MarkdownPreview? = null
+    private var syntax: SyntaxHighlighter? = null
     private val previewLifecycle = PreviewLifecycle()
     private val previewVisible get() = previewLifecycle.visible
     private var stateToken = java.util.UUID.randomUUID().toString()
     private val renderPreview = Runnable {
-        if (!isFinishing && !isDestroyed && findViewById<View>(R.id.markdownHost).isAttachedToWindow &&
+        if (!isFinishing && !isDestroyed && !AppLanguage.needsSetup(this) && findViewById<View>(R.id.markdownHost).isAttachedToWindow &&
             previewLifecycle.takeRenderRequest()) {
             if (preview == null) preview = MarkdownPreview(findViewById(R.id.markdownHost), appearanceDark)
             preview?.render(editor.text.toString())
@@ -96,13 +97,9 @@ class MainActivity : LocalizedActivity() {
             }
         }
     }
-    private val saveLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
-        if (uri != null) {
-            document = uri
-            localDocumentPath = null
-            name = displayName(uri)
-            save(false)
-        }
+    private val saveLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument(DocumentSaveOperation.CREATE_MIME_TYPE)) { uri ->
+        // Do not reuse the original file's cached path for a newly selected target.
+        if (uri != null) saveTo(uri, null)
     }
     private val reconnectLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val old = reconnectSourceUri
@@ -141,6 +138,7 @@ class MainActivity : LocalizedActivity() {
         })
         setContentView(R.layout.activity_main)
         editor = findViewById(R.id.editor)
+        syntax = SyntaxHighlighter(editor)
         lines = findViewById(R.id.lineNumbers)
         zoomPercent = EditorZoom.clamp(editorState?.getFloat("zoom_percent", prefs.getFloat("zoom_percent", 100f)) ?: prefs.getFloat("zoom_percent", 100f))
         editor.onZoomRequested = { factor, x, y -> applyZoom(zoomPercent * factor, x, y) }
@@ -215,6 +213,7 @@ class MainActivity : LocalizedActivity() {
             document = editorState.getString("uri")?.let(Uri::parse)
             localDocumentPath = editorState.getString("local_path")
             name = editorState.getString("name") ?: name
+            if (document == null) name = getString(R.string.untitled_file)
             dirty = editorState.getBoolean("dirty")
             replaceText(editorState.getString("text") ?: "")
             readOnly = editorState.getBoolean("readonly")
@@ -292,6 +291,7 @@ class MainActivity : LocalizedActivity() {
     }
 
     override fun onPause() {
+        syntax?.pause()
         previewLifecycle.pause()
         stopPreview()
         saveZoom()
@@ -301,6 +301,13 @@ class MainActivity : LocalizedActivity() {
     override fun onPostResume() {
         super.onPostResume()
         if (languageChangePending) return
+        if (AppLanguage.needsSetup(this)) {
+            if (supportFragmentManager.findFragmentByTag("language_setup") == null) {
+                LanguageSetupDialog().show(supportFragmentManager, "language_setup")
+            }
+            return
+        }
+        syntax?.resume()
         previewLifecycle.resume()
         handler.removeCallbacks(renderPreview)
         handler.post(renderPreview)
@@ -320,21 +327,23 @@ class MainActivity : LocalizedActivity() {
     }
 
     private fun setPreview(visible: Boolean) {
-        previewLifecycle.select(visible)
+        val show = visible && MarkdownRenderer.previewOnOpen(name)
+        previewLifecycle.select(show)
         stopPreview()
-        if (visible) {
+        if (show) {
             (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager)
                 .hideSoftInputFromWindow(editor.windowToken, 0)
             editor.clearFocus()
             handler.post(renderPreview)
         }
-        findViewById<View>(R.id.editorPane).visibility = if (visible) View.GONE else View.VISIBLE
-        findViewById<View>(R.id.markdownHost).visibility = if (visible) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.toolBar).visibility = if (visible) View.GONE else View.VISIBLE
+        findViewById<View>(R.id.editorPane).visibility = if (show) View.GONE else View.VISIBLE
+        findViewById<View>(R.id.markdownHost).visibility = if (show) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.toolBar).visibility = if (show) View.GONE else View.VISIBLE
         updatePreviewTabs()
     }
 
     private fun updatePreviewTabs() {
+        findViewById<View>(R.id.markdownTabs).visibility = if (MarkdownRenderer.previewOnOpen(name)) View.VISIBLE else View.GONE
         listOf(R.id.markdownEdit to !previewVisible, R.id.markdownPreview to previewVisible).forEach { (id, selected) ->
             findViewById<TextView>(id).apply {
                 isSelected = selected
@@ -385,6 +394,9 @@ class MainActivity : LocalizedActivity() {
     }
 
     private fun refresh() {
+        syntax?.configure(name, appearanceDark)
+        if (previewVisible && !MarkdownRenderer.previewOnOpen(name)) setPreview(false)
+        updatePreviewTabs()
         title.text = name + if (dirty) " *" else ""
         location.text = localDocumentPath ?: document?.let { if (it.scheme == "file") it.path else it.toString() } ?: getString(R.string.new_file)
         val output = LineEndings.encode(editor.text.toString(), originalSource)
@@ -539,12 +551,20 @@ class MainActivity : LocalizedActivity() {
 
     private fun save(asNew: Boolean) {
         if (asNew || document == null) { saveLauncher.launch(name); return }
+        saveTo(document ?: return, localDocumentPath)
+    }
+
+    private fun saveTo(uri: Uri, cachedPath: String?) {
         try {
-            val uri = document!!
             val output = LineEndings.encode(editor.text.toString(), originalSource)
-            LocalDocumentAccess.write(this, uri, localDocumentPath, output)
-            localDocumentPath = LocalDocumentAccess.path(this, uri, localDocumentPath)
-            originalSource = output
+            val saved = DocumentSaveOperation.execute(uri, output,
+                write = { target, source -> LocalDocumentAccess.write(this, target, cachedPath, source) },
+                name = { target -> displayName(target) },
+                path = { target -> LocalDocumentAccess.path(this, target, cachedPath) })
+            document = saved.target
+            localDocumentPath = saved.path
+            name = saved.name
+            originalSource = saved.source
             dirty = false
             rememberRecent(uri)
             refresh()
@@ -919,6 +939,7 @@ class MainActivity : LocalizedActivity() {
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
     private fun message(text: String) = Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
     override fun onDestroy() {
+        syntax?.close()
         stopPreview()
         handler.removeCallbacks(autosave)
         if (isFinishing) EditorStateStore(this).delete(stateToken)

@@ -32,7 +32,7 @@
         <TextView android:id="@+id/reconnectFile" android:layout_width="wrap_content" android:layout_height="48dp" android:paddingStart="12dp" android:paddingEnd="12dp" android:gravity="center" android:visibility="gone" android:text="@string/action_reselect" android:textColor="#388E3C" android:textSize="14sp" android:background="?android:attr/selectableItemBackground" android:focusable="true" />
         <ImageView android:id="@+id/closeSearchNotice" android:layout_width="48dp" android:layout_height="48dp" android:scaleType="center" android:src="@drawable/ic_close" app:tint="#555555" android:background="?android:attr/selectableItemBackgroundBorderless" android:focusable="true" android:contentDescription="@string/close_notice" />
     </LinearLayout>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="48dp" android:orientation="horizontal">
+    <LinearLayout android:id="@+id/markdownTabs" android:visibility="gone" android:layout_width="match_parent" android:layout_height="48dp" android:orientation="horizontal">
         <TextView android:id="@+id/markdownEdit" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="@string/markdown_edit" android:textSize="14sp" android:textColor="#242424" android:focusable="true" android:background="?android:attr/selectableItemBackground" />
         <TextView android:id="@+id/markdownPreview" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="@string/markdown_preview" android:textSize="14sp" android:textColor="#242424" android:focusable="true" android:background="?android:attr/selectableItemBackground" />
     </LinearLayout>
